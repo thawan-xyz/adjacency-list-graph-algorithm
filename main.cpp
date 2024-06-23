@@ -1,9 +1,10 @@
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <queue>
 #include <stack>
 #include <vector>
 #define array vector
+#define map unordered_map
 using namespace std;
 
 // @author: Thawan Ribeiro, 2024-06-23
@@ -15,13 +16,49 @@ private:
     array<map<int, int>> list;
     array<bool> marked;
 
+    void depth_first_search(int v, array<int> &result) {
+        set_mark(v);
+
+        result.push_back(v);
+
+        int w = get_first_adjacent(v);
+        while (w < VERTICES) {
+            if (!is_marked(w)) {
+                depth_first_search(w, result);
+            }
+            w = get_next_adjacent(v, w);
+        }
+    }
+
+    void breadth_first_search(int v, array<int> &result) {
+        queue<int> queue;
+        queue.push(v);
+
+        set_mark(v);
+        while (!queue.empty()) {
+            v = queue.front();
+            queue.pop();
+
+            result.push_back(v);
+
+            int w = get_first_adjacent(v);
+            while (w < VERTICES) {
+                if (!is_marked(w)) {
+                    set_mark(w);
+                    queue.push(w);
+                }
+                w = get_next_adjacent(v, w);
+            }
+        }
+    }
+
 public:
     Graph(const int n) : VERTICES(n), edges(0), list(n, map<int, int>()), marked(n, false) {}
 
     ~Graph() = default;
 
     void set_edge(const int v, const int w, const int x = 1) {
-        if (list[v].count(w) == 0) {
+        if (!has_edge(v, w)) {
             edges++;
         }
         list[v][w] = x;
@@ -41,23 +78,24 @@ public:
     }
 
     int get_weight(const int v, const int w) const {
-        if (list[v].count(w) != 0) {
+        if (has_edge(v, w)) {
             return list[v].at(w);
         }
         return 0;
     }
 
     int get_first_adjacent(const int v) const {
-        if (!list[v].empty()) {
-            return list[v].begin()->first;
+        for (int w = 0; w < VERTICES; ++w) {
+            if (has_edge(v, w)) {
+                return w;
+            }
         }
         return VERTICES;
     }
 
     int get_next_adjacent(const int v, const int p) const {
-        for (auto i : list[v]) {
-            int w = i.first;
-            if (w > p) {
+        for (int w = p + 1; w < VERTICES; ++w) {
+            if (has_edge(v, w)) {
                 return w;
             }
         }
@@ -65,17 +103,23 @@ public:
     }
 
     int get_last_adjacent(const int v) const {
-        if (!list[v].empty()) {
-            return list[v].rbegin()->first;
+        for (int w = VERTICES - 1; w >= 0; --w) {
+            if (has_edge(v, w)) {
+                return w;
+            }
         }
         return VERTICES;
     }
 
-    void set_mark(const int v, const bool m) {
-        marked[v] = m;
+    void set_mark(const int v) {
+        marked[v] = true;
     }
 
-    bool get_mark(const int v) const {
+    void del_mark(const int v) {
+        marked[v] = false;
+    }
+
+    bool is_marked(const int v) const {
         return marked[v];
     }
 
@@ -92,8 +136,8 @@ public:
 
         array<int> result;
         for (int v = 0; v < VERTICES; ++v) {
-            if (get_mark(v) == false) {
-
+            if (!is_marked(v)) {
+                depth_first_search(v, result);
             }
         }
 
@@ -105,8 +149,8 @@ public:
 
         array<int> result;
         for (int v = 0; v < VERTICES; ++v) {
-            if (get_mark(v) == false) {
-
+            if (!is_marked(v)) {
+                breadth_first_search(v, result);
             }
         }
 
